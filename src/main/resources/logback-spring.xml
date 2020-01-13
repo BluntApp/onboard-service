@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <property name="APP_NAME" value="onboard-service"/>
+  <property name="LOG_PATTERN_CONSOLE"
+    value="%d{dd-MM-yyyy HH:mm:ss.SSS} %magenta([%thread]) %highlight(%-5level) %green([${APP_NAME},%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-Span-Export:-}]) %logger{36}.%M - %msg%n"/>
+  ​
+  <property name="LOG_PATTERN_FILE"
+    value="%d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %green([${APP_NAME},%X{X-B3-TraceId:-},%X{X-B3-SpanId:-},%X{X-Span-Export:-}]) %logger{36}.%M - %msg%n"/>
+  ​
+
+
+  <!-- Console config -->
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <layout>
+      <pattern>${LOG_PATTERN_CONSOLE}</pattern>
+    </layout>
+  </appender>
+
+  <!-- File config -->
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <append>true</append>
+    <file>${LOG_PATH}/${APP_NAME}.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${APP_NAME}.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>15</maxHistory>
+    </rollingPolicy>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>${LOG_PATTERN_FILE}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Error config -->
+  <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <append>true</append>
+    <file>${LOG_PATH}/${APP_NAME}-error.log</file>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>ERROR</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_PATH}/${APP_NAME}-error.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>15</maxHistory>
+    </rollingPolicy>
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <pattern>${LOG_PATTERN_FILE}</pattern>
+    </encoder>
+
+  </appender>
+
+  <!-- Setting the root level of logging to INFO -->
+  <root level="info">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE"/>
+    <appender-ref ref="FILE_ERROR"/>
+  </root>
+</configuration>
