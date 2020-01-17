@@ -18,8 +18,7 @@ public class BluntDto {
   @JsonSerialize(using = ObjectIdSerializer.class)
   private ObjectId id;
 
-  @JsonSerialize(using = ObjectIdSerializer.class)
-  private ObjectId invitedBy;
+  private String invitedBy;
 
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdOn;

@@ -9,4 +9,5 @@ public interface BluntRepository extends MongoRepository<Blunt, ObjectId>, Blunt
 
   Blunt findByMobile(String mobile);
   Blunt findByMobileAndPassword(String mobile, String password);
+  Blunt findBluntByUserId(String userId);
 }

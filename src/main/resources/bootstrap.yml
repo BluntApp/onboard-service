@@ -7,7 +7,6 @@ spring:
         enabled: true
         service-id: config-service
 
-
 eureka:
   client:
     service-url:
@@ -18,7 +17,9 @@ eureka:
   instance:
     leaseRenewalIntervalInSeconds: 10
     health-check-url: http://host.docker.internal:9001/actuator/health
-    hostname: localhost
+#    hostname: host.docker.internal
+    ip-address: 192.168.56.1
+    prefer-ip-address: true
 
 
 

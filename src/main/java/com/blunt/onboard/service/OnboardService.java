@@ -2,14 +2,15 @@ package com.blunt.onboard.service;
 
 
 import com.blunt.onboard.dto.BluntDto;
+import com.blunt.onboard.dto.FollowDto;
+import com.blunt.onboard.dto.InviteDto;
 import com.blunt.onboard.dto.ValidateDto;
 import com.blunt.onboard.entity.Blunt;
 import com.blunt.onboard.entity.Capacitor;
-import com.blunt.onboard.entity.Follow;
 import com.blunt.onboard.error.BluntException;
 import com.blunt.onboard.mapper.BluntMapper;
+import com.blunt.onboard.proxy.FollowServiceProxyClient;
 import com.blunt.onboard.repository.BluntRepository;
-import com.blunt.onboard.repository.FollowRepository;
 import com.blunt.onboard.repository.custom.CapacitorRepository;
 import com.blunt.onboard.type.Status;
 import com.blunt.onboard.util.BluntConstant;
@@ -27,13 +28,14 @@ import org.springframework.util.ObjectUtils;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class InviteService {
+public class OnboardService {
 
   private final BluntMapper bluntMapper;
   private final BluntRepository bluntRepository;
-  private final FollowRepository followRepository;
   private final CapacitorRepository capacitorRepository;
   private final PasswordEncoder passwordEncoder;
+  private final FollowServiceProxyClient followServiceProxyClient;
+  private final SmsService smsService;
 
   public ResponseEntity<Object> signUp(BluntDto bluntDto) {
     Capacitor capacitor = capacitorRepository.findByUserId(bluntDto.getUserId());
@@ -52,7 +54,7 @@ public class InviteService {
     Blunt blunt = bluntMapper.bluntDtoToBlunt(bluntDto);
     blunt = bluntRepository.save(blunt);
     if (!ObjectUtils.isEmpty(bluntDto.getInvitedBy())) {
-      followRepository.save(frameFollow(blunt.getId(), bluntDto.getInvitedBy(), Status.PENDING));
+      followServiceProxyClient.followBlunt(frameFollow(blunt.getId(), bluntDto.getInvitedBy()));
     }
     capacitorRepository.delete(capacitor);
     return new ResponseEntity<>(bluntMapper.bluntToBluntDto(blunt), HttpStatus.OK);
@@ -68,12 +70,19 @@ public class InviteService {
     return new ResponseEntity<>(capacitor.getOtp().equals(otp), HttpStatus.OK);
   }
 
-  private Follow frameFollow(ObjectId bluntId, ObjectId followedBy, Status status) {
-    Follow follow = new Follow();
-    follow.setBluntId(bluntId);
-    follow.setFollowedBy(followedBy);
-    follow.setStatus(status);
-    return follow;
+  private FollowDto frameFollow(ObjectId bluntId, String invitedBy) {
+    FollowDto followDto = new FollowDto();
+    followDto.setBluntId(bluntId);
+    followDto.setStatus(Status.PENDING);
+    Blunt invitedBlunt = bluntRepository.findBluntByUserId(invitedBy);
+    if (ObjectUtils.isEmpty(invitedBlunt)) {
+      throw new BluntException(BluntConstant.INVALID_INVITER_ID, HttpStatus.NOT_FOUND.value(),
+          HttpStatus.NOT_FOUND);
+    }
+    followDto.setFollowerId(invitedBlunt.getId());
+    followDto.setFollowerName(invitedBlunt.getFirstName());
+    followDto.setFollowerUserId(invitedBlunt.getUserId());
+    return followDto;
   }
 
   private Boolean validateMobile(String mobile) {
@@ -148,7 +157,44 @@ public class InviteService {
       throw new BluntException(BluntConstant.INVALID_CREDENTIAL, HttpStatus.UNAUTHORIZED.value(),
           HttpStatus.UNAUTHORIZED);
     }
-    // get User post
+    // get User post  TODO
+    if (!ObjectUtils.isEmpty(validateDto.getInvitedBy())) {
+      followServiceProxyClient.followBlunt(frameFollow(blunt.getId(), validateDto.getInvitedBy()));
+    }
+
     return new ResponseEntity<>(BluntConstant.LOGGED_IN, HttpStatus.OK);
+  }
+
+  public ResponseEntity<Object> invite(InviteDto inviteDto) {
+    inviteDto.getMobileList().stream().forEach(mobile -> {
+      Blunt blunt = bluntRepository.findByMobile(mobile);
+      if(ObjectUtils.isEmpty(blunt)) {
+        signUpInvite(mobile, inviteDto.getFollowDto());
+      } else {
+        signIn(mobile, inviteDto.getFollowDto());
+      }
+    });
+    return new ResponseEntity<>(BluntConstant.NOTIFICATION_SMS_SENT, HttpStatus.OK);
+  }
+
+  private void signIn(String mobile, FollowDto followDto) {
+    String link = "https://localhost:3000/blunt/signin/"+ followDto.getFollowerUserId();
+    String smsContext = prepareSmsContext(link, followDto.getFollowerName());
+    sendInvitation(mobile, smsContext);
+  }
+
+  private void signUpInvite(String mobile, FollowDto followDto) {
+    String link = "https://localhost:3000/blunt/signup/"+ followDto.getFollowerUserId();
+    String smsContext = prepareSmsContext(link, followDto.getFollowerName());
+    sendInvitation(mobile, smsContext);
+  }
+
+  private String prepareSmsContext(String inviteLink, String firstName) {
+    String context = "Hi ,\n" + firstName + " Invited to link:" + inviteLink;
+    return context;
+  }
+
+  private void sendInvitation(String mobile, String smsContext) {
+    smsService.sendWhatsappMessage(smsContext,mobile);
   }
 }
