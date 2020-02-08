@@ -9,5 +9,4 @@ public class ValidateDto {
   private String mobile;
   private String password;
   private String otp;
-  private String invitedBy;
 }

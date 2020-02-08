@@ -5,6 +5,8 @@ import com.blunt.onboard.mapper.BluntMapper;
 import org.mapstruct.factory.Mappers;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -27,4 +29,15 @@ public class OnboardServiceConfiguration {
     mapper.setPasswordEncoder(passwordEncoder);
     return mapper;
   }
+
+  @Bean("threadPoolTaskExecutor")
+  public TaskExecutor getAsyncExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(20);
+    executor.setMaxPoolSize(1000);
+    executor.setWaitForTasksToCompleteOnShutdown(true);
+    executor.setThreadNamePrefix("Async-");
+    return executor;
+  }
+
 }

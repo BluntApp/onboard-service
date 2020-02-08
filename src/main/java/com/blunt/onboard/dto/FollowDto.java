@@ -19,5 +19,5 @@ public class FollowDto {
   private String followerName;
   private String followerUserId;
   private Status status;
-  private List<String> mobileList;
+  private String mobile;
 }

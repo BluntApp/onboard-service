@@ -23,4 +23,5 @@ public class BluntConstant {
   public static final String MOBILE_NOT_REGISTERED = "Mobile Not Registered";
   public static final String NOTIFICATION_SMS_SENT = "Notification SMS sent";
   public static final String INVALID_INVITER_ID = "Requester Id not found";
+  public static final String EMPTY_STRING = "";
 }

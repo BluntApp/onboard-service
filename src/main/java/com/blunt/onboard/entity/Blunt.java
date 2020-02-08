@@ -34,4 +34,5 @@ public class Blunt {
   private String zipCode;
   private String userId;
   private String password;
+  private String photo;
 }

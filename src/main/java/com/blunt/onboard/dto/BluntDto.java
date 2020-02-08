@@ -18,8 +18,6 @@ public class BluntDto {
   @JsonSerialize(using = ObjectIdSerializer.class)
   private ObjectId id;
 
-  private String invitedBy;
-
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdOn;
 
@@ -34,14 +32,15 @@ public class BluntDto {
 
   @NotNull(message = "Blunt Email id is mandatory")
   private String email;
-
+  private String userId;
   private String dob;
   private String street;
   private String city;
   private String state;
   private String country;
   private String zipCode;
-  private String userId;
+
   private String password;
   private String otp;
+  private String photo;
 }

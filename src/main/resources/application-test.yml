@@ -37,7 +37,9 @@ logging:
   file:
     path: C:/Users/kpaulpa/Documents/workArea/TechnicalWork/logs/blunt-onboard-service
 
-twilio:
-  sid: AC7212fa2d8057ae09117bc2407afb6611
-  token: 1d41ee14db1cb9dbd9fdbfb55b9c3419
-  messageCenter: whatsapp:+14155238886
+feign:
+  client:
+    config:
+      follow-service:
+        connectTimeout: 1000
+        readTimeout: 1000
