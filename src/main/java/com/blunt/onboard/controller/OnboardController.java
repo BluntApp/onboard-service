@@ -1,6 +1,7 @@
 package com.blunt.onboard.controller;
 
 import com.blunt.onboard.dto.BluntDto;
+import com.blunt.onboard.dto.FollowingDto;
 import com.blunt.onboard.dto.ValidateDto;
 import com.blunt.onboard.proxy.FollowServiceProxyClient;
 import com.blunt.onboard.service.OnboardService;
@@ -58,8 +59,8 @@ public class OnboardController {
 
   @PostMapping("invite")
   // pass jwt token instead of id on header. use jwt token to get the bluntId.
-  public ResponseEntity<Object> invite(@RequestBody List<String> mobileList, @RequestHeader(name = "BLUNT-ID", required = true) String inviterId){
-    return onboardService.invite(mobileList, inviterId);
+  public ResponseEntity<Object> invite(@RequestBody FollowingDto followingDto, @RequestHeader(name = "BLUNT-ID", required = true) String inviterId){
+    return onboardService.invite(followingDto, inviterId);
   }
 
   @GetMapping("resend/{mobile}")
