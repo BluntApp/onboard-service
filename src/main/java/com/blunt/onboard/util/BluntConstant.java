@@ -25,4 +25,6 @@ public class BluntConstant {
   public static final String INVALID_INVITER_ID = "Requester Id not found";
   public static final String EMPTY_STRING = "";
   public static final String OWN_FOLLOW_NOT_ALLOWED = "Not allowed to follow";
+  public static final String MOBILE_AVAILABLE = "Mobile Available";
+  public static final String OTP_MESSAGE = " is your OTP for validation of Mobile in Blunt. Do not share is with anyone by any means. This is confidential and to be used by you only";
 }

@@ -22,10 +22,8 @@ public class SmsProxyService {
     messageDto.setToMobile(mobile);
     log.info("MessageContext:" + messageDto.getMessageContext());
     try{
-      System.out.println("Execute method with configured executor - "
-          + Thread.currentThread().getName());
-      Thread.currentThread().sleep(50000);
-      smsServiceProxyClient.sendTextSMS(messageDto);
+     String smsSentStatus = smsServiceProxyClient.sendTextSMS(messageDto);
+     log.info(smsSentStatus);
     } catch (Exception e){
       log.info("Exception", e);
       log.warn("Sending SMS Failed.");

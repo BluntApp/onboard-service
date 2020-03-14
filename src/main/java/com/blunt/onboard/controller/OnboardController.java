@@ -37,6 +37,12 @@ public class OnboardController {
     return onboardService.checkAvailability(mobile);
   }
 
+  @GetMapping("otp/{mobile}")
+  public ResponseEntity<Object> generateAndSendOTP(@PathVariable String mobile) {
+    return onboardService.generateAndSendOTP(mobile);
+  }
+
+
   @PostMapping("create")
   public ResponseEntity<Object> validateOtpAndGenerateUserId(@RequestBody ValidateDto validateDto) {
     return onboardService.validateOtpAndGenerateUserId(validateDto.getOtp(), validateDto.getMobile());
@@ -66,6 +72,12 @@ public class OnboardController {
   @GetMapping("resend/{mobile}")
   public ResponseEntity<Object> resendOtp(@PathVariable String mobile) {
     return onboardService.resendOtp(mobile);
+  }
+
+  @GetMapping("blunt/{id}")
+  public ResponseEntity<Object> getBluntName(@PathVariable String id) {
+    ResponseEntity<Object> bluntName = onboardService.getBluntName(id);
+    return bluntName;
   }
 
 }

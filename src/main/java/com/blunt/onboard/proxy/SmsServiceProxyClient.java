@@ -11,6 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface SmsServiceProxyClient {
 
   @PostMapping(path="/api/v1/sms/text")
-  public ResponseEntity<Object> sendTextSMS(@RequestBody MessageDto messageDto);
+  public String  sendTextSMS(@RequestBody MessageDto messageDto);
 
 }

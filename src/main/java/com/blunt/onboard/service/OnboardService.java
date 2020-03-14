@@ -1,6 +1,8 @@
 package com.blunt.onboard.service;
 
 
+import static com.blunt.onboard.util.BluntConstant.OTP_MESSAGE;
+
 import com.blunt.onboard.dto.BluntDto;
 import com.blunt.onboard.dto.FollowDto;
 import com.blunt.onboard.dto.FollowingDto;
@@ -43,6 +45,7 @@ public class OnboardService {
   private final FollowServiceProxyClient followServiceProxyClient;
   private final SmsServiceProxyClient smsServiceProxyClient;
   private final SmsProxyService smsProxyService;
+  private final EmailProxyService emailProxyService;
 
   public ResponseEntity<Object> signUp(BluntDto bluntDto) {
     Capacitor capacitor = capacitorRepository.findByUserId(bluntDto.getUserId());
@@ -148,26 +151,10 @@ public class OnboardService {
 
   public ResponseEntity<Object> checkAvailability(String mobile) {
     if (validateMobile(mobile)) {
-      generateAndSendOTP(mobile);
-      return new ResponseEntity<>(BluntConstant.OTP_SENT, HttpStatus.OK);
+      return new ResponseEntity<>(BluntConstant.MOBILE_AVAILABLE, HttpStatus.OK);
     }
     throw new BluntException(BluntConstant.MOBILE_UNAVAILABLE, HttpStatus.CONFLICT.value(),
         HttpStatus.CONFLICT);
-  }
-
-  private void generateAndSendOTP(String mobile) {
-    String otp = BluntUtil.generateOTP(4);
-    //send otp to mobile
-    Capacitor capacitor =
-        ObjectUtils.isEmpty(capacitorRepository.findByMobile(mobile)) ? new Capacitor()
-            : capacitorRepository.findByMobile(mobile);
-    capacitor.setMobile(mobile);
-    capacitor.setOtp(otp);
-    capacitor.setStatus(Status.ACTIVE);
-    capacitor.setTime(LocalDateTime.now());
-    capacitorRepository.save(capacitor);
-    String smsContext = prepareOTPSmsContext(otp);
-    smsProxyService.sendSMSText(mobile, smsContext);
   }
 
   public ResponseEntity<Object> validateOtpAndGenerateUserId(String otp, String mobile) {
@@ -183,6 +170,7 @@ public class OnboardService {
   }
 
   // do more validation
+
   private String generateAndValidateUserId() {
     String userId = BluntUtil.generateUserId(8);
     if (!ObjectUtils.isEmpty(capacitorRepository.findByUserId(userId))) {
@@ -190,19 +178,34 @@ public class OnboardService {
     }
     return userId;
   }
-
   public ResponseEntity<Object> resendOtp(String mobile) {
+    String otp = BluntUtil.generateOTP(4);
     Capacitor capacitor = capacitorRepository.findByMobile(mobile);
     if (ObjectUtils.isEmpty(capacitor)) {
       throw new BluntException(BluntConstant.INVALID_MOBILE, HttpStatus.NOT_ACCEPTABLE.value(),
           HttpStatus.NOT_ACCEPTABLE);
     }
-    String otp = BluntUtil.generateOTP(4);
     capacitor.setOtp(otp);
     capacitor.setStatus(Status.ACTIVE);
     capacitor.setTime(LocalDateTime.now());
     capacitorRepository.save(capacitor);
 
+    String smsContext = prepareOTPSmsContext(otp);
+    smsProxyService.sendSMSText(mobile, smsContext);
+    return new ResponseEntity<>(BluntConstant.OTP_SENT, HttpStatus.OK);
+  }
+//TODO remove duplicate method in otp generation
+  public ResponseEntity<Object> generateAndSendOTP(String mobile) {
+    String otp = BluntUtil.generateOTP(4);
+    //send otp to mobile
+    Capacitor capacitor =
+        ObjectUtils.isEmpty(capacitorRepository.findByMobile(mobile)) ? new Capacitor()
+            : capacitorRepository.findByMobile(mobile);
+    capacitor.setMobile(mobile);
+    capacitor.setOtp(otp);
+    capacitor.setStatus(Status.ACTIVE);
+    capacitor.setTime(LocalDateTime.now());
+    capacitorRepository.save(capacitor);
     String smsContext = prepareOTPSmsContext(otp);
     smsProxyService.sendSMSText(mobile, smsContext);
     return new ResponseEntity<>(BluntConstant.OTP_SENT, HttpStatus.OK);
@@ -234,7 +237,7 @@ public class OnboardService {
     Optional<Blunt> inviterBlunt = bluntRepository.findById(new ObjectId(inviterId));
     inviterBlunt.ifPresent(iBlunt -> {
       String smsContext = "Hi " + receiverBlunt.getFirstName() + ",\n" + iBlunt.getFirstName()
-          + "is Interested to follow you on Blunt";
+          + " is Interested to follow you on Blunt";
 
       if(receiverBlunt.getId().toString().equals(inviterId)){
         throw new BluntException(BluntConstant.OWN_FOLLOW_NOT_ALLOWED,
@@ -252,6 +255,8 @@ public class OnboardService {
             HttpStatus.CONFLICT);
       }
       smsProxyService.sendSMSText(receiverBlunt.getMobile(), smsContext);
+      Blunt blunt = bluntRepository.findByMobile(receiverBlunt.getMobile());
+      emailProxyService.sendEmail("Blunt Follow Invite",blunt.getEmail(),smsContext);
     });
   }
 
@@ -274,13 +279,12 @@ public class OnboardService {
   }
 
   private String prepareSignUpSmsContext(String inviteLink, Blunt inviterBlunt) {
-    String context = "Hi ,\n" + inviterBlunt.getFirstName() + " Invited to link:" + inviteLink;
+    String context = "Hi,\n" + inviterBlunt.getFirstName() + " Invited you to link: " + inviteLink;
     return context;
   }
 
   private String prepareOTPSmsContext(String otp) {
-    String context = "OTP for Mobile validation is :" + otp;
-    return context;
+    return otp+OTP_MESSAGE;
   }
 
   public ResponseEntity<Object> profileUpdate(BluntDto bluntDto) {
@@ -289,4 +293,8 @@ public class OnboardService {
     return new ResponseEntity<>(bluntMapper.bluntToBluntDto(blunt), HttpStatus.OK);
   }
 
+  public ResponseEntity<Object> getBluntName(String id) {
+    Optional<Blunt> optionalBlunt = bluntRepository.findById(new ObjectId(id));
+    return new ResponseEntity<>(optionalBlunt.get().getFirstName(),HttpStatus.OK);
+  }
 }
